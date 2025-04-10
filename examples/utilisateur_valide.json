@@ -1,0 +1,10 @@
+{
+    "nom": "Alice",
+    "age": 25,
+    "email": "alice@example.com",
+    "adresse": {
+      "rue": "123 Rue Principale",
+      "ville": "Paris",
+      "code_postal": "75000"
+    }
+  }
