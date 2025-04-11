@@ -30,25 +30,25 @@ es.indices.create(index=INDEX_NAME, body=mapping)
 # 5. Insertion de quelques documents (Alertes Zabbix)
 documents = [
     {
-        "titre": "Zabbix: CPU trop élevée sur Serveur Web",
-        "contenu": "L'utilisation du CPU sur le serveur web a dépassé 90%. Veuillez vérifier immédiatement.",
-        "auteur": "Zabbix",
+        "titre": "Test de recherche avec Elasticsearch",
+        "contenu": "Elasticsearch est un moteur de recherche distribué.",
+        "auteur": "Anis",
         "date_publication": "2024-12-11",
-        "severite": "Critique"
+        "nb_vues": 1500
     },
     {
-        "titre": "Zabbix: Espace disque faible sur la base de données",
-        "contenu": "L'espace disque disponible sur le serveur de base de données est inférieur à 10%.",
-        "auteur": "Zabbix",
+        "titre": "Recherche avancée avec Python",
+        "contenu": "Comment utiliser Elasticsearch en Python pour des requêtes complexes.",
+        "auteur": "Emmanuel",
         "date_publication": "2024-12-11",
-        "severite": "Avertissement"
+        "nb_vues": 800
     },
     {
-        "titre": "Zabbix: Serveur DNS injoignable",
-        "contenu": "Le serveur DNS principal est injoignable depuis plus de 5 minutes.",
-        "auteur": "Zabbix",
+        "titre": "Data Science et Elasticsearch",
+        "contenu": "Utiliser Elasticsearch pour l'analyse de données en temps réel.",
+        "auteur": "Anis",
         "date_publication": "2024-12-11",
-        "severite": "Critique"
+        "nb_vues": 1200
     }
 ]
 
@@ -74,7 +74,7 @@ query_filtree = {
     "query": {
         "bool": {
             "must": [
-                {"match": {"auteur": "Alice"}}
+                {"match": {"auteur": "Anis"}}
             ],
             "filter": [
                 {"range": {"date_publication": {"gte": "2023-10-01"}}}
@@ -107,7 +107,7 @@ print("\n=== Résultats : Recherche simple (Python) ===")
 resultats_simple = es.search(index=INDEX_NAME, body=query_simple)
 afficher_resultats(resultats_simple)
 
-print("\n=== Résultats : Recherche filtrée (Alice après Octobre 2023) ===")
+print("\n=== Résultats : Recherche filtrée (Anis après Octobre 2023) ===")
 resultats_filtree = es.search(index=INDEX_NAME, body=query_filtree)
 afficher_resultats(resultats_filtree)
 

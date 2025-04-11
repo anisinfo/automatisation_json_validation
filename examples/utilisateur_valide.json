@@ -1,7 +1,7 @@
 {
-    "nom": "Alice",
+    "nom": "Anis",
     "age": 25,
-    "email": "alice@example.com",
+    "email": "Anis@example.com",
     "adresse": {
       "rue": "123 Rue Principale",
       "ville": "Paris",
