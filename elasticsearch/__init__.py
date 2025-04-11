@@ -1,16 +1,16 @@
 from elasticsearch import Elasticsearch
 import json
 import logging
-from elasticsearch.elasticsearch_client import ElasticsearchClient  # Import de la classe
+from elasticsearch.elasticsearch_client import ElasticsearchClient 
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# 1. Configuration Elasticsearch
+
 INDEX_NAME = "poc_recherche_alertes"
 es_client = ElasticsearchClient(index_name=INDEX_NAME)
 
-# 2. Mapping de l'index
+
 mapping = {
     "mappings": {
         "properties": {
@@ -23,15 +23,15 @@ mapping = {
     }
 }
 
-# 3. Création de l'index (si inexistant)
+
 try:
-    es_client.delete_index() #Suppression de l'index existant
+    es_client.delete_index()
     es_client.create_index(mapping)
 except Exception as e:
     logging.error(f"Erreur lors de la création/suppression de l'index: {e}")
     exit()
 
-# 4. Insertion de documents (Alertes Zabbix)
+# Insertion de documents (Alertes Zabbix)
 documents = [
     {
         "titre": "Zabbix: CPU trop élevée sur Serveur Web",
@@ -64,7 +64,7 @@ try:
 except Exception as e:
     logging.error(f"Erreur lors de l'indexation des documents Zabbix: {e}")
 
-# 5. Exemples de requêtes
+
 query_simple = {
     "query": {
         "match": {
@@ -96,7 +96,7 @@ query_fulltext = {
     }
 }
 
-# 6. Affichage des résultats (factorisation)
+
 def afficher_resultats(reponse):
     hits = reponse['hits']['hits']
     print(f"Nombre de résultats : {len(hits)}")
@@ -105,7 +105,7 @@ def afficher_resultats(reponse):
         print(f"Score: {hit['_score']}")
         print(f"Source: {json.dumps(hit['_source'], indent=2, ensure_ascii=False)}")
 
-# 7. Exécution des recherches et affichage
+
 try:
     print("\n=== Recherche simple (CPU) ===")
     resultats_simple = es_client.search(query_simple)
