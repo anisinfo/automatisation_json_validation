@@ -2,7 +2,7 @@ from elasticsearch import Elasticsearch
 import json
 import logging
 
-# Configuration du logging
+# Config du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class ElasticsearchClient:
@@ -11,21 +11,21 @@ class ElasticsearchClient:
         Initialise le client Elasticsearch.
 
         :param hosts: Liste des hôtes Elasticsearch.
-        :param index_name: Nom de l'index par défaut.
+        :param index_name: Index par défaut.
         """
         self.es = Elasticsearch(hosts)
         self.index_name = index_name
         if self.es.ping():
-            logging.info("Connexion à Elasticsearch réussie.")
+            logging.info("Connexion réussie  à ElasticSearch.")
         else:
-            logging.error("Impossible de se connecter à Elasticsearch.")
-            raise ConnectionError("Impossible de se connecter à Elasticsearch.")
+            logging.error("Connexion Impossible à Elasticsearch.")
+            raise ConnectionError("Connexion Impossible à Elasticsearch.")
 
     def create_index(self, mapping):
         """
-        Crée un index avec le mapping spécifié.
+        Crée un index avec un mapping spécifique.
 
-        :param mapping: Le mapping de l'index.
+        :param mapping: Le nom de mapping.
         """
         try:
             if not self.es.indices.exists(index=self.index_name):
@@ -39,7 +39,7 @@ class ElasticsearchClient:
 
     def delete_index(self):
         """
-        Supprime l'index.
+        Supprission de l'index.
         """
         try:
             if self.es.indices.exists(index=self.index_name):
@@ -56,7 +56,7 @@ class ElasticsearchClient:
         Indexe un document dans l'index.
 
         :param document: Le document à indexer (dictionnaire).
-        :param document_id: L'ID du document (optionnel).  Si non spécifié, Elasticsearch génère un ID.
+        :param document_id: L'ID du document.  Si non spécifié, Elasticsearch génère un ID.
         """
         try:
             res = self.es.index(index=self.index_name, body=document, id=document_id)
