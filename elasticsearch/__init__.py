@@ -2,11 +2,11 @@ from elasticsearch import Elasticsearch
 from datetime import datetime
 import json
 
-# 1. Connexion à Elasticsearch (par défaut : localhost:9200)
+# 1. Connexion à Elasticsearch
 es = Elasticsearch(["http://localhost:9200"])
 
 # 2. Nom de l'index
-INDEX_NAME = "poc_recherche_articles"
+INDEX_NAME = "poc_recherche_alertes"
 
 # 3. Suppression de l'index s'il existe déjà (pour repartir de zéro)
 if es.indices.exists(index=INDEX_NAME):
@@ -20,34 +20,35 @@ mapping = {
             "contenu": {"type": "text", "analyzer": "french"},
             "auteur": {"type": "keyword"},  # Pas d'analyse pour les filtres exacts
             "date_publication": {"type": "date"},
-            "nb_vues": {"type": "integer"}
+            "nb_vues": {"type": "integer"},
+            "severite": {"type": "keyword"}  # Ajout du champ "severite"
         }
     }
 }
 es.indices.create(index=INDEX_NAME, body=mapping)
 
-# 5. Insertion de quelques documents
+# 5. Insertion de quelques documents (Alertes Zabbix)
 documents = [
     {
-        "titre": "Introduction à Elasticsearch",
-        "contenu": "Elasticsearch est un moteur de recherche puissant basé sur Lucene.",
-        "auteur": "Alice",
-        "date_publication": "2023-10-01",
-        "nb_vues": 1500
+        "titre": "Zabbix: CPU trop élevée sur Serveur Web",
+        "contenu": "L'utilisation du CPU sur le serveur web a dépassé 90%. Veuillez vérifier immédiatement.",
+        "auteur": "Zabbix",
+        "date_publication": "2024-12-11",
+        "severite": "Critique"
     },
     {
-        "titre": "Recherche avancée avec Python",
-        "contenu": "Comment utiliser Elasticsearch en Python pour des requêtes complexes.",
-        "auteur": "Bob",
-        "date_publication": "2023-10-15",
-        "nb_vues": 800
+        "titre": "Zabbix: Espace disque faible sur la base de données",
+        "contenu": "L'espace disque disponible sur le serveur de base de données est inférieur à 10%.",
+        "auteur": "Zabbix",
+        "date_publication": "2024-12-11",
+        "severite": "Avertissement"
     },
     {
-        "titre": "Data Science et Elasticsearch",
-        "contenu": "Utiliser Elasticsearch pour l'analyse de données en temps réel.",
-        "auteur": "Alice",
-        "date_publication": "2023-11-01",
-        "nb_vues": 1200
+        "titre": "Zabbix: Serveur DNS injoignable",
+        "contenu": "Le serveur DNS principal est injoignable depuis plus de 5 minutes.",
+        "auteur": "Zabbix",
+        "date_publication": "2024-12-11",
+        "severite": "Critique"
     }
 ]
 
