@@ -1,100 +1,102 @@
 from elasticsearch import Elasticsearch
-from datetime import datetime
 import json
+import logging
+from elasticsearch.elasticsearch_client import ElasticsearchClient  # Import de la classe
 
-# 1. Connexion à Elasticsearch
-es = Elasticsearch(["http://localhost:9200"])
+# Configuration du logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# 2. Nom de l'index
+# 1. Configuration Elasticsearch
 INDEX_NAME = "poc_recherche_alertes"
+es_client = ElasticsearchClient(index_name=INDEX_NAME)
 
-# 3. Suppression de l'index s'il existe déjà (pour repartir de zéro)
-if es.indices.exists(index=INDEX_NAME):
-    es.indices.delete(index=INDEX_NAME)
-
-# 4. Création d'un index avec un mapping personnalisé
+# 2. Mapping de l'index
 mapping = {
     "mappings": {
         "properties": {
             "titre": {"type": "text", "analyzer": "french"},
             "contenu": {"type": "text", "analyzer": "french"},
-            "auteur": {"type": "keyword"},  # Pas d'analyse pour les filtres exacts
+            "auteur": {"type": "keyword"},
             "date_publication": {"type": "date"},
-            "nb_vues": {"type": "integer"},
-            "severite": {"type": "keyword"}  # Ajout du champ "severite"
+            "severite": {"type": "keyword"}
         }
     }
 }
-es.indices.create(index=INDEX_NAME, body=mapping)
 
-# 5. Insertion de quelques documents (Alertes Zabbix)
+# 3. Création de l'index (si inexistant)
+try:
+    es_client.delete_index() #Suppression de l'index existant
+    es_client.create_index(mapping)
+except Exception as e:
+    logging.error(f"Erreur lors de la création/suppression de l'index: {e}")
+    exit()
+
+# 4. Insertion de documents (Alertes Zabbix)
 documents = [
     {
-        "titre": "Test de recherche avec Elasticsearch",
-        "contenu": "Elasticsearch est un moteur de recherche distribué.",
-        "auteur": "Anis",
+        "titre": "Zabbix: CPU trop élevée sur Serveur Web",
+        "contenu": "L'utilisation du CPU sur le serveur web a dépassé 90%. Veuillez vérifier immédiatement.",
+        "auteur": "Zabbix",
         "date_publication": "2024-12-11",
-        "nb_vues": 1500
+        "severite": "Critique"
     },
     {
-        "titre": "Recherche avancée avec Python",
-        "contenu": "Comment utiliser Elasticsearch en Python pour des requêtes complexes.",
-        "auteur": "Emmanuel",
+        "titre": "Zabbix: Espace disque faible sur la base de données",
+        "contenu": "L'espace disque disponible sur le serveur de base de données est inférieur à 10%.",
+        "auteur": "Zabbix",
         "date_publication": "2024-12-11",
-        "nb_vues": 800
+        "severite": "Avertissement"
     },
     {
-        "titre": "Data Science et Elasticsearch",
-        "contenu": "Utiliser Elasticsearch pour l'analyse de données en temps réel.",
-        "auteur": "Anis",
+        "titre": "Zabbix: Serveur DNS injoignable",
+        "contenu": "Le serveur DNS principal est injoignable depuis plus de 5 minutes.",
+        "auteur": "Zabbix",
         "date_publication": "2024-12-11",
-        "nb_vues": 1200
+        "severite": "Critique"
     }
 ]
 
-for i, doc in enumerate(documents):
-    es.index(index=INDEX_NAME, id=i+1, body=doc)
+try:
+    for doc in documents:
+        es_client.index_document(doc)
+    es_client.refresh_index()
+    logging.info(f"{len(documents)} documents Zabbix indexés.")
+except Exception as e:
+    logging.error(f"Erreur lors de l'indexation des documents Zabbix: {e}")
 
-# Rafraîchir l'index pour que les données soient disponibles pour la recherche
-es.indices.refresh(index=INDEX_NAME)
-
-# 6. Exemples de requêtes de recherche
-
-# Requête 1 : Recherche simple (match sur "contenu")
+# 5. Exemples de requêtes
 query_simple = {
     "query": {
         "match": {
-            "contenu": "Python"
+            "contenu": "CPU"
         }
     }
 }
 
-# Requête 2 : Recherche avec filtres (auteur + date)
-query_filtree = {
+query_severite = {
     "query": {
         "bool": {
             "must": [
-                {"match": {"auteur": "Anis"}}
+                {"match": {"auteur": "Zabbix"}}
             ],
             "filter": [
-                {"range": {"date_publication": {"gte": "2023-10-01"}}}
+                {"term": {"severite": "Critique"}}
             ]
         }
     }
 }
 
-# Requête 3 : Recherche full-text avec scoring (boost sur le titre)
-query_boost = {
+query_fulltext = {
     "query": {
         "multi_match": {
-            "query": "recherche données",
-            "fields": ["titre^3", "contenu"],  # ^3 = boost x3 pour le titre
+            "query": "disque base de données",
+            "fields": ["titre", "contenu"],
             "type": "best_fields"
         }
     }
 }
 
-# 7. Exécution des requêtes et affichage des résultats
+# 6. Affichage des résultats (factorisation)
 def afficher_resultats(reponse):
     hits = reponse['hits']['hits']
     print(f"Nombre de résultats : {len(hits)}")
@@ -103,14 +105,19 @@ def afficher_resultats(reponse):
         print(f"Score: {hit['_score']}")
         print(f"Source: {json.dumps(hit['_source'], indent=2, ensure_ascii=False)}")
 
-print("\n=== Résultats : Recherche simple (Python) ===")
-resultats_simple = es.search(index=INDEX_NAME, body=query_simple)
-afficher_resultats(resultats_simple)
+# 7. Exécution des recherches et affichage
+try:
+    print("\n=== Recherche simple (CPU) ===")
+    resultats_simple = es_client.search(query_simple)
+    afficher_resultats(resultats_simple)
 
-print("\n=== Résultats : Recherche filtrée (Anis après Octobre 2023) ===")
-resultats_filtree = es.search(index=INDEX_NAME, body=query_filtree)
-afficher_resultats(resultats_filtree)
+    print("\n=== Recherche par sévérité (Critique) ===")
+    resultats_severite = es_client.search(query_severite)
+    afficher_resultats(resultats_severite)
 
-print("\n=== Résultats : Recherche boostée (titre prioritaire) ===")
-resultats_boost = es.search(index=INDEX_NAME, body=query_boost)
-afficher_resultats(resultats_boost)
+    print("\n=== Recherche full-text (disque base de données) ===")
+    resultats_fulltext = es_client.search(query_fulltext)
+    afficher_resultats(resultats_fulltext)
+
+except Exception as e:
+    logging.error(f"Erreur lors de l'exécution des requêtes: {e}")
